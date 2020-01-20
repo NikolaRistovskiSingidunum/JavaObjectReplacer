@@ -18,7 +18,7 @@ public class ObjectReplacer {
 
 	// 2 classes are equal if they have equal names
 	public static boolean areClassesEqual(Class c1, Class c2) {
-		return c1 != null && c2 != null && c1.getName().endsWith(c2.getName());
+		return c1 != null && c2 != null && c1.getName().equals(c2.getName());
 	}
 
 	// Replaces all object with class "targetClass" inside "current" object, with

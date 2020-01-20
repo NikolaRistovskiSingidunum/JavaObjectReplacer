@@ -8,39 +8,6 @@ import java.util.Set;
 
 public class ObjectReplacer {
 
-	//Menja objekat Target sa objektom newRef, rekurzivno gde je Current Glava stabla
-	// Replaces all "target" object inside "current" object with new object "newRef"
-	public static void replaceAllRef(Object current, Object target, Object newRef, HashSet<Object> alreadyChecked)
-			throws IllegalArgumentException, IllegalAccessException {
-		if (current != null) {
-
-			for (Field f : getAllFields(current.getClass())) {
-				f.setAccessible(true);
-
-				Object fieldValue = f.get(current);
-
-				// ako je obradjeno ili setovano preskoci
-				// skip if already handled or set
-				if (alreadyChecked.contains(fieldValue) || fieldValue == newRef) {
-					System.out.println("Hash map " + fieldValue.toString());
-					System.out.println(alreadyChecked.contains(fieldValue) + "contains");
-					continue;
-				}
-
-				alreadyChecked.add(fieldValue);
-
-				// proveri svu decu
-				// check for all children
-				replaceAllRef(fieldValue, target, newRef, alreadyChecked);
-
-				if (fieldValue == target)
-					f.set(current, newRef);
-
-			}
-
-		}
-	}
-
 	public static List<Field> getAllFields(Class<?> type) {
 		List<Field> fields = new ArrayList<Field>();
 		for (Class<?> c = type; c != null; c = c.getSuperclass()) {
@@ -49,9 +16,13 @@ public class ObjectReplacer {
 		return fields;
 	}
 
-	
 	// Replaces all object with class "targetClass" inside "current" object, with
-	// new object of class "newClass", note that distinction of objec will be preserved. 
+	// new object of class "newClass", note that distinction of objec will be
+	// preserved.
+	public static boolean areClassesEqual(Class c1, Class c2) {
+		return c1 != null && c2 != null && c1.getName().endsWith(c2.getName());
+	}
+
 	public static void replaceAllRef(Object current, Class targetClass, Class newClass,
 			HashMap<Object, Object> objectForObject, HashMap<Object, Set<Field>> alreadyChecked)
 			throws IllegalArgumentException, IllegalAccessException, InstantiationException {
@@ -77,7 +48,7 @@ public class ObjectReplacer {
 
 				for (int i = 0; i < elements.length; i++) {
 					Object element = elements[i];
-					if (element != null && element.getClass().equals(targetClass)) {
+					if (element != null && areClassesEqual(element.getClass(), targetClass)) {
 						if (!objectForObject.containsKey(element)) {
 							objectForObject.put(element, newClass.newInstance());
 						}
@@ -90,27 +61,29 @@ public class ObjectReplacer {
 				}
 
 			} else {
-				
+				// ne znam da li postoji nacin da se ovo uradi efektnije
+
 				// izbegavaj proveru istog polja na istom objektu
-				//avoid double checking
 				if (alreadyChecked.containsKey(current) && alreadyChecked.get(current).contains(f))
 					continue;
 
-				//preskoci ako je klasa vec setovana
-				//skip if class is alread correct 	
-				if (current.getClass() == targetClass)
+				// ne ulazimo u objekat da menjamo njegove unturasnje reference, samo stvari
+				// koji pokazuju na njega
+				// ali mozemo da npr. da kopiramo polja - kao npr. transform i ostale reference
+				// na assete ako je objekat promenjen u editoru
+
+				if (areClassesEqual(current.getClass(), targetClass))
 					continue;
 
-				//obelezi provereno polje
-				//mark that field is checked
 				if (!alreadyChecked.containsKey(current))
 					alreadyChecked.put(current, new HashSet<Field>());
 
 				alreadyChecked.get(current).add(f);
 
-				// ako se klasa poklapa, nadji zamenu u mapi pokazivaca, a ako je nema, kreiraj novi objekat
-				// if classes are matching, find a replacement of an object inside map, if not present create a new object  
-				if (fieldValue != null && fieldValue.getClass() != null && fieldValue.getClass().equals(targetClass)) {
+				// ako se klasa poklapa, nadji zamenu u mapi pokazivaca, a ako je nema, kreiraj
+				// novi objekat
+				if (fieldValue != null && fieldValue.getClass() != null
+						&& areClassesEqual(fieldValue.getClass(), targetClass)) {
 
 					if (!objectForObject.containsKey(fieldValue)) {
 						objectForObject.put(fieldValue, newClass.newInstance());

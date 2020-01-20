@@ -16,13 +16,14 @@ public class ObjectReplacer {
 		return fields;
 	}
 
-	// Replaces all object with class "targetClass" inside "current" object, with
-	// new object of class "newClass", note that distinction of objec will be
-	// preserved.
+	// 2 classes are equal if they have equal names
 	public static boolean areClassesEqual(Class c1, Class c2) {
 		return c1 != null && c2 != null && c1.getName().endsWith(c2.getName());
 	}
 
+	// Replaces all object with class "targetClass" inside "current" object, with
+	// new object of class "newClass", note that distinction of objects will be
+	// preserved.
 	public static void replaceAllRef(Object current, Class targetClass, Class newClass,
 			HashMap<Object, Object> objectForObject, HashMap<Object, Set<Field>> alreadyChecked)
 			throws IllegalArgumentException, IllegalAccessException, InstantiationException {
@@ -69,8 +70,7 @@ public class ObjectReplacer {
 
 				// ne ulazimo u objekat da menjamo njegove unturasnje reference, samo stvari
 				// koji pokazuju na njega
-				// ali mozemo da npr. da kopiramo polja - kao npr. transform i ostale reference
-				// na assete ako je objekat promenjen u editoru
+				// ali mozemo da npr. da kopiramo polja 
 
 				if (areClassesEqual(current.getClass(), targetClass))
 					continue;
